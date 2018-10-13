@@ -1,9 +1,13 @@
 package com.radn.wsdl_api;
 
 
+import com.radn.wsdl_api.com.radn.entities.Operation;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface OperationRepository {
-    void newOperation(int A, int B, int result);
-    void listOperations(LocalDateTime from, LocalDateTime to);
+    Operation newOperation(char type, int A, int B, int result);
+    List<Operation> listOperations(LocalDateTime from, LocalDateTime to);
+    List<Operation> listDayOperations(LocalDateTime day);
 }

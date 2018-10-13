@@ -10,11 +10,13 @@ public class Operation {
     private int firstOperand;
     private int secondOperand;
     private int result;
+    private char type;
     @Temporal(value=TemporalType.TIMESTAMP)
     private LocalDateTime created;
 
-    public Operation(int firstOperand, int secondOperand, int result) {
+    public Operation(char type, int firstOperand, int secondOperand, int result) {
         this();
+        this.type = type;
         this.firstOperand = firstOperand;
         this.secondOperand = secondOperand;
         this.result = result;
@@ -63,5 +65,26 @@ public class Operation {
 
     public void setResult(int result) {
         this.result = result;
+    }
+
+    public char getType() {
+        return type;
+    }
+
+    public void setType(char type) {
+        this.type = type;
+    }
+
+    public LocalDateTime getCreated() {
+        return created;
+    }
+
+    public void setCreated(LocalDateTime created) {
+        this.created = created;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%d %s %d",firstOperand,type,secondOperand);
     }
 }
