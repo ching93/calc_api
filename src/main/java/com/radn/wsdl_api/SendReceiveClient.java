@@ -15,7 +15,6 @@ public class SendReceiveClient extends WebServiceGatewaySupport implements SendR
         Add request = new Add();
         request.setIntA(A);
         request.setIntB(B);
-        System.out.println(namespace_uri);
         return (AddResponse)getWebServiceTemplate().marshalSendAndReceive(request, new SoapActionCallback(namespace_uri+"Add"));
     }
 

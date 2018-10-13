@@ -1,8 +1,9 @@
 package com.radn.wsdl_api;
 
 import com.radn.wsdl_api.com.radn.entities.Operation;
+import jdk.nashorn.internal.runtime.regexp.joni.Regex;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.CacheManager;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,6 +15,9 @@ import com.radn.domainClasses.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 public class MainController {
@@ -23,49 +27,84 @@ public class MainController {
     private OperationRepository repository;
 
     private int operationCounter;
-    public static final int maxOperations = 10000;
+    @Value("${scheduler.maxOperations}")
+    public int maxOperations;
 
-    @RequestMapping("/add")
-    @Cacheable("operations")
+    public int getMaxOperations() {
+        return maxOperations;
+    }
+
+    public void setMaxOperations(int maxOperations) {
+        this.maxOperations = maxOperations;
+    }
+
     @Transactional
+    @RequestMapping("/add")
     public Operation add(@RequestParam(value="A")int A, @RequestParam(value="B")int B) {
-        if (operationCounter > maxOperations)
-            return null;
-        System.out.println("Requesting result..");
-        AddResponse resp = wsdl.getAdd(A, B);
-        Operation op = repository.newOperation('+',A,B,resp.getAddResult());
-        return op;
+        return createOperation('+', A,B);
     }
     @Transactional
     @RequestMapping("/subtract")
-    @Cacheable("operations")
     public Operation subtract(@RequestParam(value="A")int A, @RequestParam(value="B")int B) {
-        if (operationCounter > maxOperations)
-            return null;
-        System.out.println("Requesting result..");
-        SubtractResponse resp = wsdl.getSubtract(A, B);
-        return repository.newOperation('-',A,B,resp.getSubtractResult());
+        return createOperation('-', A,B);
     }
     @Transactional
     @RequestMapping("/multiply")
-    @Cacheable("operations")
     public Operation multiply(@RequestParam(value="A")int A, @RequestParam(value="B")int B) {
-        if (operationCounter > maxOperations)
-            return null;
-        System.out.println("Requesting result..");
-        MultiplyResponse resp = wsdl.getMultiply(A, B);
-        return repository.newOperation('*',A,B,resp.getMultiplyResult());
+        return createOperation('*', A,B);
     }
     @Transactional
     @RequestMapping("/divide")
-    @Cacheable("operations")
     public Operation divide(@RequestParam(value="A")int A, @RequestParam(value="B")int B) {
+        return createOperation('/', A,B);
+    }
+    @Transactional
+    @RequestMapping("/operation")
+    public Operation operation(@RequestParam(value="type")char type, @RequestParam(value="A")int A, @RequestParam(value="B")int B) {
+        // + - %2B, / - %2F, * - %2A
+        if ("+-/*".indexOf((int)type) != -1)
+            return createOperation(type, A,B);
+        else
+            return null;
+    }
+    /*@RequestMapping("/expression")
+    public List<Operation> expression(@RequestParam(value="expr")String expr) {
+        Matcher matches = Pattern.compile("(\\d+)\\s+([\\/\\+\\*\\-])\\s+(\\d+)").matcher(expr);
+        while (matches.find()) {
+            int first = Integer.parseInt(matches.group(0));
+            char op = matches.group(1).charAt(0);
+            int second = Integer.parseInt(matches.group(2));
+        }
+    }*/
+    @Cacheable("operations")
+    public Operation createOperation(char type, int A, int B) {
         if (operationCounter > maxOperations)
             return null;
-        System.out.println("Requesting result..");
-        DivideResponse resp = wsdl.getDivide(A, B);
-
-        return repository.newOperation('/',A,B,resp.getDivideResult());
+        //System.out.println("Requesting result..");
+        int result;
+        switch (type) {
+            case '+':
+                AddResponse addresp = wsdl.getAdd(A, B);
+                result = addresp.getAddResult();
+                break;
+            case '-':
+                SubtractResponse subtrresp = wsdl.getSubtract(A, B);
+                result = subtrresp.getSubtractResult();
+                break;
+            case '*':
+                MultiplyResponse mulresp = wsdl.getMultiply(A, B);
+                result = mulresp.getMultiplyResult();
+                break;
+            case '/':
+                DivideResponse divresp = wsdl.getDivide(A, B);
+                result = divresp.getDivideResult();
+                break;
+            default:
+                return null;
+        }
+        Operation op = repository.newOperation(type,A, B, result);
+        operationCounter++;
+        return op;
     }
     @Transactional
     @RequestMapping("/list")
