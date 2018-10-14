@@ -15,6 +15,5 @@ public class WsdlApiApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(WsdlApiApplication.class, args);
-
     }
 }

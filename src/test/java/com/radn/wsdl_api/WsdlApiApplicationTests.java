@@ -84,4 +84,25 @@ public class WsdlApiApplicationTests {
             assert d.getSeconds()*60 >= opLimitDelay;
     }
 
+    /**
+     * Разбор выражений
+     */
+    @Test
+    public void calculateExpression() {
+        String[] expressions = new String[] {
+                "25/4*34/22*34+6=312",
+                "25*66-34*43*34-6=-48064",
+                "25*665667+34/43*34+6=16641715",
+                "25/44+40/43*34+6=41",
+                "2048/2/2/2/2/2/2/2=16"
+        };
+        for (String expression: expressions) {
+            String[] line = expression.split("\\=",2);
+            String correct = line[1];
+            String leftPart = line[0];
+            MainController.ReplaceResult result = controller.expression(leftPart);
+            System.out.println(expression+" -- "+result.expression);
+            assert result.expression.equals(correct);
+        }
+    }
 }
